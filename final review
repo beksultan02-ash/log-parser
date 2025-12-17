@@ -1,0 +1,66 @@
+import os
+
+if os.path.exists('logs.txt'):
+    with open('logs.txt','r') as file:
+        groups = {}
+        line_number = 0  # ← считаем строки для отладки
+
+        for line in file:
+            line_number += 1
+            original_line = line  # сохраняем оригинал
+            line = line.strip()
+            
+            print(f"\n=== Строка {line_number}: '{original_line.rstrip()}' ===")
+            print(f"После strip: '{line}'")
+
+            if ']' in line:
+                log_type = line.split(']')[0][1:]
+                print(f"Найден тип лога: '{log_type}'")
+                
+                # Убираем возможные пробелы
+                log_type = log_type.strip()
+                print(f"Тип после strip: '{log_type}'")
+
+                if log_type not in groups:
+                    groups[log_type] = []
+                    print(f"Создана новая группа: {log_type}")
+            
+                groups[log_type].append(line)
+                print(f"Добавлено в группу '{log_type}'. Всего в группе: {len(groups[log_type])}")
+            
+            else:
+                print("Не содержит ']' - вероятно продолжение")
+                if groups:
+                    last_type = list(groups.keys())[-1]
+                    print(f"Последний тип: '{last_type}'")
+                    
+                    if groups[last_type]:
+                        print(f"Добавляю как продолжение к: '{groups[last_type][-1][:30]}...'")
+                        groups[last_type][-1] += '\n' + line
+                else:
+                    print("Группы пусты - игнорирую строку")
+
+        print("\n" + "="*50)
+        print("ИТОГО:")
+        for log_type, messages in groups.items():
+            print(f"{log_type}: {len(messages)} сообщение(й)")
+            for i, msg in enumerate(messages):
+                print(f"  Сообщение {i+1}:")
+                for msg_line in msg.split('\n'):
+                    print(f"    {msg_line}")
+
+        # Запись в файлы
+        print("\n" + "="*50)
+        print("СОЗДАНИЕ ФАЙЛОВ:")
+        for log_type, messages in groups.items():
+            filename = f"{log_type.lower()}.log"
+            print(f"Создаю {filename}...")
+
+            with open(filename, 'w') as output_file:
+                for message in messages:
+                    output_file.write(message + '\n')
+                    
+            print(f"  Записано {len(messages)} строк в {filename}")
+            
+else:
+    print("Файл 'logs.txt' не найден!")
